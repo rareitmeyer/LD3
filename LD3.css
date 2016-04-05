@@ -1,0 +1,75 @@
+
+#map_div {
+  width: 600px;
+  height: 400px;
+}
+
+
+table.popup_school_caaspp .value {
+  text-align: right;
+}
+
+#legend_div {
+  background-color: #ccc;
+  border-color: #444;
+  border-width: 2px;
+  font-size: 10px;
+  font-family: Univers, sans-serif;
+  margin: 5px;
+  border: 0px;
+  padding: 5px;
+  width: 580px;
+}
+
+#legend_div svg {
+  margin: 0px;
+  border: 0px;
+  padding: 0px;
+}
+
+#legend_div table,tr,td {
+  border: 0px;
+  padding: 0px;
+  margin-left: 20px;
+  border-spacing: 0;
+}
+
+#legend_div p.legend_prop {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  margin-left: 10px;
+  border: 0px;
+  padding: 0px;
+}
+
+#legend_div p.legend_layer {
+  margin: 0px;
+  border: 0px;
+  padding: 0px;
+}
+
+.legend_name {
+  text-align: right;
+  font-weight: bold;
+}
+
+.legend_value {
+  font-size: 1px;
+}
+
+div.label_div {
+  width: 120px;
+  margin-left: -60px;
+  margin-top: -10px;
+  margin-bottom: 0px;
+  margin-right: 0px;
+  border: 0px;
+  padding: 0px;
+  text-align: center;
+}
+
+div.label_div p {
+  margin: 0px;
+  font-size: 7px;
+  font-family: Univers, sans-serif;
+}
