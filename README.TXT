@@ -18,8 +18,8 @@ Two recommended choices would be:
   $ http-server
 
 Once you've run one of these commands, point your browser to
-http://localhost:8080 and you should see a map --- if you're online.
-If you are not online, see the 'Working Offline' section below.
+http://localhost:8080/LD3.html and you should see a map --- if you're 
+online. If you are not online, see the 'Working Offline' section below.
 
 # Altering Visualization
 
