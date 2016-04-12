@@ -36,3 +36,13 @@ function make_xhr_closure(fn, props)
     return fn(error, resp, props)
   }
 }
+
+
+function elementwiseMultiply(a, b) {
+  var stop = Math.min(a.length, b.length)
+  var retval = []
+  for (var i = 0; i < stop; ++i) {
+    retval.push(a[i]*b[i])
+  }
+  return retval
+}

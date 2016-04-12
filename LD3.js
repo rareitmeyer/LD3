@@ -175,7 +175,6 @@ GeoApp.prototype.setStyle = function(obj_name)
         }
       }
     }
-
     this.extra_layers[obj_name].layer_obj.setStyle((function(feature) {
         var style = {}
         for (var i = 0; i < this.style_elements.length; ++i) {
@@ -253,15 +252,13 @@ GeoApp.prototype.fetchLayer = function(obj)
     self.extra_layers[obj.name]['data'] = data
 
     // Add popup, if there's a popup defined
-    options = {}
+    options = obj.layer.options
     if ('popupMst' in self.extra_layers[obj.name]) {
       popup_mst_url = self.extra_layers[obj.name]['popupMst']
       if (popup_mst_url !== "") {
         template = Handlebars.compile(self.mustache_templates[popup_mst_url])
         if (template !== "") {
-          options = {
-            onEachFeature: self.popupTemplateRenderer(template)
-          }
+          options['onEachFeature'] = self.popupTemplateRenderer(template)
         }
       }
     }
@@ -286,7 +283,6 @@ GeoApp.prototype.processLayerRecord = function(d)
   self = this
   // augment each record
   d.id = d.name.replace(/[^A-Za-z0-9_]/g, '_')
-  d.layer_obj = new L.geoJson()
   d.loaded = false
 
   // eliminate any blanks.
@@ -294,6 +290,45 @@ GeoApp.prototype.processLayerRecord = function(d)
     if (typeof(d[k]) === 'undefined' || (typeof(d[k]) === 'string' && d[k].trim() === '')) {
       delete d[k]
     }
+  }
+  
+  var options = {}
+  if (d['geomType:value'] == 'point' && 'icon:url' in d) {
+    var size = [16,16]
+    var location = [8,16]
+    if ('icon:anchor' in d) {
+      if (d['icon:anchor'] == 'top-left' || d['icon:anchor'] == 'left-top') {
+        location = elementwiseMultiply([0  , 0  ], size)
+      } else if (d['icon:anchor'] == 'top-center' || d['icon:anchor'] == 'center-top') {
+        location = elementwiseMultiply([0.5, 0  ], size)
+      } else if (d['icon:anchor'] == 'top-right' || d['icon:anchor'] == 'right-top') {
+        location = elementwiseMultiply([1.0, 0  ], size)
+      } else if (d['icon:anchor'] == 'center-left' || d['icon:anchor'] == 'left-center') {
+        location = elementwiseMultiply([0  , 0.5], size)
+      } else if (d['icon:anchor'] == 'center-center' || d['icon:anchor'] == 'center') {
+        location = elementwiseMultiply([0.5, 0.5], size)
+      } else if (d['icon:anchor'] == 'center-right' || d['icon:anchor'] == 'right-center') {
+        location = elementwiseMultiply([1.0, 0.5], size)
+      } else if (d['icon:anchor'] == 'bottom-left' || d['icon:anchor'] == 'left-bottom') {
+        location = elementwiseMultiply([0  , 1.0], size)
+      } else if (d['icon:anchor'] == 'bottom-center' || d['icon:anchor'] == 'center-bottom') {
+        location = elementwiseMultiply([0.5, 1.0], size)
+      } else if (d['icon:anchor'] == 'bottom-right' || d['icon:anchor'] == 'right-bottom') {
+        location = elementwiseMultiply([1.0, 1.0], size)
+      } else {
+        raise('unknown icon:anchor '+d['icon:anchor'])
+      }
+    }
+    console.log('location is'+location.toString())
+    options['pointToLayer'] = function(feat,ll) {
+        return L.marker(ll, {
+            icon: L.icon({
+              iconUrl: d['icon:url'],
+              iconSize: size,
+              iconAnchor: location
+            })
+        })
+      }
   }
 
   // handle 'properties' column
@@ -367,6 +402,7 @@ GeoApp.prototype.processLayerRecord = function(d)
     }
   }
 
+  d.layer_obj = new L.geoJson(null, options)
   this.extra_layers[d.name] = d
   this.layer_control.addOverlay(this.extra_layers[d.name].layer_obj, d.name);
 }
@@ -513,18 +549,24 @@ GeoApp.prototype.addLegend = function(layer_name)
       .append("table").attr("class", "legend_layer")
         .append("tr")
     tr.append("td").attr("class", "legend_name").text(layer_name)
-    var svg = tr.append("td").attr("class", "legend_value")
-      .append("svg")
-      .attr("width", 2*box_size).attr("height", box_size)
-    // now draw two rectangles side-by-side so we get a boundary between them
-    for (i = 0; i < 2; ++i) {
-      svg.append("rect")
-        .attr("width", box_size).attr("height", box_size)
-        .attr("x", i*box_size).attr("y", 0)
-        .attr("stroke", this.getStyle(layer_name, "color", {'properties':{}}))
-        .attr("stroke-width", this.getStyle(layer_name, "weight", {'properties':{}}))
-        .attr("opacity", this.getStyle(layer_name, "fillOpacity", {'properties':{}}))
-        .attr("fill", this.getStyle(layer_name, "fillColor", {'properties':{}}))
+    var legend_value = tr.append("td").attr("class", "legend_value")
+      .attr("class", "legend_value")
+    if (this.extra_layers[layer_name]['geomType:value'] == 'point') {
+      legend_value.append("img").attr("src", this.extra_layers[layer_name]['icon:url'])
+    } else if (this.extra_layers[layer_name]['geomType:value'] == 'shape') {
+      var svg = legend_value
+        .append("svg")
+        .attr("width", 2*box_size).attr("height", box_size)
+      // now draw two rectangles side-by-side so we get a boundary between them
+      for (i = 0; i < 2; ++i) {
+        svg.append("rect")
+          .attr("width", box_size).attr("height", box_size)
+          .attr("x", i*box_size).attr("y", 0)
+          .attr("stroke", this.getStyle(layer_name, "color", {'properties':{}}))
+          .attr("stroke-width", this.getStyle(layer_name, "weight", {'properties':{}}))
+          .attr("opacity", this.getStyle(layer_name, "fillOpacity", {'properties':{}}))
+          .attr("fill", this.getStyle(layer_name, "fillColor", {'properties':{}}))
+      }
     }
   } else {
     legend_div.append("p").attr("class", "legend_layer").text(layer_name)

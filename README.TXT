@@ -26,8 +26,32 @@ online. If you are not online, see the 'Working Offline' section below.
 There will be a layer-picker at the top-right, and you can use that
 to see your data.
 
+For point-layers, the Maki icons are recommended. Get them from
+https://github.com/mapbox/maki.
 
-# Altering Visualization
+
+# Changing Icons (Point Layers Only)
+
+Point data shows discrete points on a map, like the location of a
+resturant or school. Point layers are shown with icons, specified
+as a URL in the "icon:value" column. Icons must be 16x16 pixels,
+preferably as PNG files.
+
+Optionally, a icon:anchor column can be given to pick the location
+of the point relative to the icon. Use 'top-right' to position
+the icon so the point is at the top-right corner of the icon. 
+Similarly, 'bottom-left' will position the icon so the point is at
+the icon's bottom-left. Valid choices for the icon:anchor are
+
+    top-left     top-center     top-right
+   center-left     center      center-right
+   bottom-left  bottom-center  bottom-right
+
+If there is no icon:anchor column, or it is blank, the icon is
+anchored as if bottom-center was given.
+
+
+# Altering Visualization (Shape Layers Only)
 
 The tool visualizes geographic shape data with styles defined in the
 layers.csv file. There are four controllable settings:
@@ -76,7 +100,7 @@ appears once. EG, suppose CurrentExpensePerADA controls both fillColor
 and fillOpacity --- CurrentExpensePerADA will show up once.
 
 
-# Vizualizing Multiple Properties
+# Vizualizing Multiple Properties (Shape Layers Only)
 
 If multiple properties are visualized at the same time, each property
 will appear with its key, assuming all the other properties are at their
@@ -93,7 +117,7 @@ with different formatting, it might be better to let users control the
 visualization and toggle back-and-forth as desired. Which leads to...
 
 
-# User Choice for Visualization
+# User Choice for Visualization (Shape Layers Only)
 
 If a layer has data visualization, it is possible to let users pick
 other properties to visualize in the same way. List the other candidates
@@ -186,9 +210,8 @@ the sample layers.csv are local (like sampledata/grade_3_mathematics.geojson),
 but online URLs are perfectly fine, if you have one 
 (like https://data.smcgov.org/api/geospatial/ca5i-9ks8?method=export&format=GeoJSON).
 
-Fill in the geom_type:value column with the kind of geometry that the
-layer contains --- right now this must say "shape" because LD3 only
-supports shapes at the moment.
+Make sure there's a "geomType:value" column with the kind of geometry
+that the layer contains. Choices are "shape" and "point".
 
 Add or adjust other columns as required, using the notes above.
 
@@ -217,3 +240,10 @@ to comment out the online versions of these libraries, and uncomment
 the local versions.
 
 Again, you won't be able to see the base maps.
+
+
+# Changes
+
+2016-04-12: 
+* renamed geom_type:value column to geomType:value, and made it required.
+* added support for point layers with icons
