@@ -8,18 +8,24 @@ San Mateo Code for America Brigade.
 # Simple Use
 
 To use it, you will need to unpack the sample data in sampledata.tar.xz.
+(If you have Javascript disabled, you'll also need to un-disable it.)
 
 And you'll need a (minimal) web server, running in this directory.
-Two recommended choices would be:
+Open a command line and change to the directory where LD3.html is.
+Then use one of these two recommended choices for a basic web server:
 
 * If you have python3, use the built-in web server:
-  $ python3 -m http.server 8080
+  python3 -m http.server 8080
 * If you have node.js, use npm to install http-server and use http-server:
-  $ http-server
+  http-server
 
 Once you've run one of these commands, point your browser to
 http://localhost:8080/LD3.html and you should see a map --- if you're 
 online. If you are not online, see the 'Working Offline' section below.
+
+There will be a layer-picker at the top-right, and you can use that
+to see your data.
+
 
 # Altering Visualization
 
@@ -44,6 +50,9 @@ Provide the property name in the GeoJSON file as the :property setting,
 and use :range:low and :range:high to specify the value to use for the
 shape with the lowest and highest property value. 
 
+If all four columns (:value, :property, :range:low and :range:high)
+are specified and filled in, :value will take precedence.
+
 
 ## Visualization Example
 
@@ -65,6 +74,9 @@ layer.
 If one property is visualized in multiple ways, the property key only
 appears once. EG, suppose CurrentExpensePerADA controls both fillColor
 and fillOpacity --- CurrentExpensePerADA will show up once.
+
+
+# Vizualizing Multiple Properties
 
 If multiple properties are visualized at the same time, each property
 will appear with its key, assuming all the other properties are at their
@@ -106,12 +118,29 @@ property that it can visualize at the same time.
 # Changing Popups
 
 Clicking on a shape will being up a popup with details. The popups are
-Handlebars templates of content that should make sense in a HTML div,
-of (at most) 100px wide by 400px high. Use {{property.<propname>}} to
-display the <propname> property in the data.
+Handlebars templates of content for an HTML div.  Note that the popup
+cannot be very big---content should fit in a div of (at most) 100px
+wide by 400px high. Use {{property.<propname>}} to display the
+<propname> property from the data for the shape. For example, in the
+CAASPP data, the Ca Dept of Eucation name for the school district is
+the "caed_name" property, so the popup Handlebars template contains
+{{property.caed_name}} to identify the district.
+
+Please refer to Handlebars and/or HTML documentation for details.
+
+* Handlebars at http://handlebarsjs.com/
+* w3 HTML5 at https://www.w3.org/TR/html5/
 
 
-## Numeric Formatters
+## Numeric Formatters in Handlebars Templates
+
+Numeric data can often benefit from a little cleanup.  If a school
+district with 11313 residents aged 5-17 has 1728 of those residents in
+poverty, a computer will calculate a Pop_5_17_Poverty_Percent field
+with value 15.274463 ... but for purposes of displaying poverty to a
+human, most of those decimal places are clutter and should be omitted.
+And it's nice to put a % suffix on percentages, and a $ prefix on
+figures in dollars, even though the raw data lacks them.
 
 A few formatters are available, for controlling how numbers in the 
 data will appear in the popup:
@@ -135,6 +164,13 @@ Each shape can be labeled, if the map is zoomed in enough. The property
 used as a label is specified in the layers.csv file with the label:property
 column. The minimum zoom must be provided in the label:minzoom column.
 
+Tip: Picking the minimum zoom is best approached through trial and
+error.  For the sample school district data, the first zoom level
+where the names do not significantly overlap is ~10, in the author's
+opinion.  For something like parks and open space, where some city
+parks are just the size of a large residential yard, you'd probably
+want a much higher minzoom, or to omit labels altogether.
+
 Known issue: if labels are shown, then the layer is hidden, then the
 zoom is changed, then the layer is un-hidden, the label state (shown or
 not) is based on the zoom when when the layer was hidden, not the current
@@ -145,10 +181,14 @@ zoom.
 
 To add a new layer, make or find a GeoJSON file with your data. Add a
 row to the layers.csv file with a name for the data (which will appear
-in the layer selector) and the URL to retreive the data. Fill in the
-geom_type:value column with the kind of geometry that the layer
-contains --- right now this must say "shape" because LD3 only supports
-shapes at the moment.
+in the layer selector) and the URL to retreive the data. The URLs in
+the sample layers.csv are local (like sampledata/grade_3_mathematics.geojson),
+but online URLs are perfectly fine, if you have one 
+(like https://data.smcgov.org/api/geospatial/ca5i-9ks8?method=export&format=GeoJSON).
+
+Fill in the geom_type:value column with the kind of geometry that the
+layer contains --- right now this must say "shape" because LD3 only
+supports shapes at the moment.
 
 Add or adjust other columns as required, using the notes above.
 
