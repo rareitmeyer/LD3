@@ -1,0 +1,10 @@
+<div class="data_attribution">
+<p>Data in this map comes from several source</p>
+<ul>
+<li>Shape files are US Census TIGER LINE for 2014, available from <a href="https://www.census.gov/geo/maps-data/data/tiger-line.html">https://www.census.gov/geo/maps-data/data/tiger-line.html</a></li>
+<li>CAASPP data is from the CA Department of Education at <a href="http://caaspp.cde.ca.gov/sb2015/ResearchFileList">http://caaspp.cde.ca.gov/sb2015/ResearchFileList</a> and is from tests in 2015.</li>
+<li>Per-pupil spending is available at <a href="http://www.cde.ca.gov/ds/fd/ec/currentexpense.asp">http://www.cde.ca.gov/ds/fd/ec/currentexpense.asp</a> and is from the 2014-2015 school year</li>
+<li>Poverty data is available at <a href="http://www.census.gov/did/www/saipe/data/schools/data/2014.html">http://www.census.gov/did/www/saipe/data/schools/data/2014.html</a> and is circa 2014.</li>
+<ul>
+</div>
+

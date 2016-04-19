@@ -1,0 +1,17 @@
+<h4>{{properties.name}} CAASPP results for {{properties.test_year}}</h4>
+<p>Grade {{properties.grade}} {{properties.test_name}}</p>
+<table class="popup_school_caaspp">
+<tr><th class="metric">Metric</th><th class="value">Value</th></tr>
+<tr><td class="metric">Students Tested</td><td class="value">{{float0 properties.students_tested}}</td></tr>
+<tr><td class="metric">Average (mean) Score</td><td class="value">{{float2 properties.mean_scale_score}}</td></tr>
+<tr><td class="metric">Percentage who exceeded state standard</td><td class="value">{{percentage0 properties.percentage_standard_exceeded}}</td></tr>
+<tr><td class="metric">Percentage who met state standard</td><td class="value">{{percentage0 properties.percentage_standard_met}}</td></tr>
+<tr><td class="metric">Percentage who met or exceeded state standard</td><td class="value">{{percentage0 properties.percentage_standard_met_and_above}}</td></tr>
+<tr><td class="metric">Percentage who nearly met state standard</td><td class="value">{{percentage0 properties.percentage_standard_nearly_met}}</td></tr>
+<tr><td class="metric">Percentage who did not meet state standard</td><td class="value">{{percentage0 properties.percentage_standard_not_met}}</td></tr>
+<tr><td class="metric">Percentage childen 5-17 in poverty</td><td class="value">{{percentage0 properties.Pop_5_17_Poverty_Percent}}</td></tr>
+<tr><td class="metric">Average Daily Attendance</td><td class="value">{{float0 properties.CurrentExpenseADA}}</td></tr>
+<tr><td class="metric">Per-pupil spending</td><td class="value">{{dollars0 properties.CurrentExpensePerADA}}</td></tr>
+</table>
+
+<p>District URL: <a href="{{properties.website}}">{{properties.website}}</a></p>
