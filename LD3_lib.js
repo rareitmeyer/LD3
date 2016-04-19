@@ -46,3 +46,21 @@ function elementwiseMultiply(a, b) {
   }
   return retval
 }
+
+
+function removeBlanks(d)
+{
+  for(k in d) {
+    if (typeof(d[k]) === 'undefined') {
+      delete d[k]
+    } else if (typeof(d[k]) === 'string') {
+      d[k] = d[k].trim()
+      if (d[k] === '') {
+        delete d[k]
+      }
+    }
+  }
+  return (d)
+}
+
+

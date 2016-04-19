@@ -37,6 +37,7 @@ function GeoApp(map_div, base_layers, initial_base) {
   this.extra_layers = {}  // layer {display name: {url: obj:layer geom_type:point|shape opacity:prop}, map, to be added later
 
   this.mustache_templates = {} // mustache templaates: {url: text}
+  this.csv_files = {} // CSV files, {url: text}
 
   // Make a map and add a layer-picker
   this.map = new L.Map(this.map_div, {center: [37.5, -122.25], zoom: 9, layers: this.base_layers[this.initial_base]})
@@ -45,7 +46,8 @@ function GeoApp(map_div, base_layers, initial_base) {
   this.layer_control = L.control.layers(this.base_layers, this.extra_layers)
   this.layer_control.addTo(this.map);
 
-  this.mustache_elements = ['popupMst']
+  this.mustache_elements = ['popupMst', 'attributionMst']
+  this.csv_elements = ['icon:mapCsv']
   this.style_elements = ['color', 'fillColor', 'opacity', 'fillOpacity', 'weight']
   this.style_props = ['value', 'property', 'range:low', 'range:high', 'default']
 
@@ -277,6 +279,77 @@ GeoApp.prototype.fetchLayer = function(obj)
     }, {'obj': obj}))
 }
 
+
+GeoApp.prototype.locationFromIconAnchor = function (size, iconAnchor)
+{
+  var location = [8,16]
+  if (typeof(iconAnchor) !== 'undefined' && iconAnchor != '') {
+    if (iconAnchor == 'top-left' || iconAnchor == 'left-top') {
+      location = elementwiseMultiply([0  , 0  ], size)
+    } else if (iconAnchor == 'top-center' || iconAnchor == 'center-top') {
+      location = elementwiseMultiply([0.5, 0  ], size)
+    } else if (iconAnchor == 'top-right' || iconAnchor == 'right-top') {
+      location = elementwiseMultiply([1.0, 0  ], size)
+    } else if (iconAnchor == 'center-left' || iconAnchor == 'left-center') {
+      location = elementwiseMultiply([0  , 0.5], size)
+    } else if (iconAnchor == 'center-center' || iconAnchor == 'center') {
+      location = elementwiseMultiply([0.5, 0.5], size)
+    } else if (iconAnchor == 'center-right' || iconAnchor == 'right-center') {
+      location = elementwiseMultiply([1.0, 0.5], size)
+    } else if (iconAnchor == 'bottom-left' || iconAnchor == 'left-bottom') {
+      location = elementwiseMultiply([0  , 1.0], size)
+    } else if (iconAnchor == 'bottom-center' || iconAnchor == 'center-bottom') {
+      location = elementwiseMultiply([0.5, 1.0], size)
+    } else if (iconAnchor == 'bottom-right' || iconAnchor == 'right-bottom') {
+      location = elementwiseMultiply([1.0, 1.0], size)
+    } else {
+      raise('unknown icon:anchor '+iconAnchor)
+    }
+  }
+
+  return(location)
+}
+
+
+GeoApp.prototype.iconUrlFactory = function(d, self)
+{
+  var fn = function(feature) {
+    return('icons/Unknown.png')
+  }
+
+  if ('icon:url' in d) {
+    fn = function(feature) {
+      return (d['icon:url'])
+    }
+  } else if ('icon:mapCsv' in d) {
+    fn = function(feature) {
+      var mapCsv = self.csv_files[d['icon:mapCsv']]
+      iconUrl = 'icons/Unknown.png'
+      for (row_idx in mapCsv) {
+        row = mapCsv[row_idx]
+        match = true
+        for (colname in row) {
+          if (colname !== 'icon:url') {
+            if (colname in feature.properties) {
+              if (feature.properties[colname] !== row[colname]) {
+                match = false
+              }
+            } else {
+              match = false
+            }
+          }
+        }
+        if (match === true) {
+          iconUrl = row['icon:url']
+          break
+        }
+      }  
+      return (iconUrl)
+    }
+  }
+  return (fn)
+}
+
 // Process a row of layer data, d.
 GeoApp.prototype.processLayerRecord = function(d)
 {
@@ -285,45 +358,20 @@ GeoApp.prototype.processLayerRecord = function(d)
   d.id = d.name.replace(/[^A-Za-z0-9_]/g, '_')
   d.loaded = false
 
-  // eliminate any blanks.
-  for(k in d) {
-    if (typeof(d[k]) === 'undefined' || (typeof(d[k]) === 'string' && d[k].trim() === '')) {
-      delete d[k]
-    }
-  }
+  // trim and eliminate any blanks.
+  d = removeBlanks(d)
   
   var options = {}
-  if (d['geomType:value'] == 'point' && 'icon:url' in d) {
-    var size = [16,16]
-    var location = [8,16]
-    if ('icon:anchor' in d) {
-      if (d['icon:anchor'] == 'top-left' || d['icon:anchor'] == 'left-top') {
-        location = elementwiseMultiply([0  , 0  ], size)
-      } else if (d['icon:anchor'] == 'top-center' || d['icon:anchor'] == 'center-top') {
-        location = elementwiseMultiply([0.5, 0  ], size)
-      } else if (d['icon:anchor'] == 'top-right' || d['icon:anchor'] == 'right-top') {
-        location = elementwiseMultiply([1.0, 0  ], size)
-      } else if (d['icon:anchor'] == 'center-left' || d['icon:anchor'] == 'left-center') {
-        location = elementwiseMultiply([0  , 0.5], size)
-      } else if (d['icon:anchor'] == 'center-center' || d['icon:anchor'] == 'center') {
-        location = elementwiseMultiply([0.5, 0.5], size)
-      } else if (d['icon:anchor'] == 'center-right' || d['icon:anchor'] == 'right-center') {
-        location = elementwiseMultiply([1.0, 0.5], size)
-      } else if (d['icon:anchor'] == 'bottom-left' || d['icon:anchor'] == 'left-bottom') {
-        location = elementwiseMultiply([0  , 1.0], size)
-      } else if (d['icon:anchor'] == 'bottom-center' || d['icon:anchor'] == 'center-bottom') {
-        location = elementwiseMultiply([0.5, 1.0], size)
-      } else if (d['icon:anchor'] == 'bottom-right' || d['icon:anchor'] == 'right-bottom') {
-        location = elementwiseMultiply([1.0, 1.0], size)
-      } else {
-        raise('unknown icon:anchor '+d['icon:anchor'])
-      }
-    }
+  if (d['geomType:value'] == 'point') {
+    var size = [16, 16]
+    var location = this.locationFromIconAnchor(size, d['icon:anchor'])
     console.log('location is'+location.toString())
+    
+    iconFn = this.iconUrlFactory(d, this)
     options['pointToLayer'] = function(feat,ll) {
         return L.marker(ll, {
             icon: L.icon({
-              iconUrl: d['icon:url'],
+              iconUrl: iconFn(feat),
               iconSize: size,
               iconAnchor: location
             })
@@ -333,33 +381,57 @@ GeoApp.prototype.processLayerRecord = function(d)
 
   // handle 'properties' column
   if ('properties' in d) {
-    d.properties = d.properties.trim().split(' ')
+    d.properties = d.properties.split(' ')
   }
 
+
+  // load CSV files
+  for (i = 0; i < this.csv_elements.length; ++i) {
+    var csv_elem = this.csv_elements[i]
+    if (csv_elem in d) {
+      var url = d[csv_elem]
+      if (!(url in this.csv_files)) {
+        this.csv_files[url] = []
+        d3.csv(url,
+          make_xhr_closure(
+            function(error, resp, props) {
+              if (error) {
+                console.log(error)
+                throw error
+              }
+              console.log(resp)
+              var url = props['url']
+              console.log("loaded csv file for url "+url+" as "+resp)
+              for (j in resp) {
+                resp[j] = removeBlanks(resp[j])
+              }
+              self.csv_files[url] = resp
+            }, {'url': url})
+        )
+      }
+    }
+  }
 
   // load mustache templates for popups
   for (i = 0; i < this.mustache_elements.length; ++i) {
     var mst_elem = this.mustache_elements[i]
     if (mst_elem in d) {
-      d[mst_elem] = d[mst_elem].trim()
-      if (d[mst_elem] !== '') {
-        var url = d[mst_elem]
-        if (!(url in this.mustache_templates)) {
-          this.mustache_templates[url] = "TEMPLATE NOT LOADED"
-          d3.xhr(url, "text/plain", 
-            make_xhr_closure(
-              function(error, resp, props) {
-                if (error) {
-                  console.log(error)
-                  throw error
-                }
-                console.log(resp)
-                var url = props['url']
-                console.log("loaded template for url "+url+" as "+resp.response)
-                self.mustache_templates[url] = resp.response
-              }, {'url': url})
-          )
-        }
+      var url = d[mst_elem]
+      if (!(url in this.mustache_templates)) {
+        this.mustache_templates[url] = "TEMPLATE NOT LOADED"
+        d3.xhr(url, "text/plain", 
+          make_xhr_closure(
+            function(error, resp, props) {
+              if (error) {
+                console.log(error)
+                throw error
+              }
+              console.log(resp)
+              var url = props['url']
+              console.log("loaded template for url "+url+" as "+resp.response)
+              self.mustache_templates[url] = resp.response
+            }, {'url': url})
+        )
       }
     }
   }
@@ -372,11 +444,8 @@ GeoApp.prototype.processLayerRecord = function(d)
     for (var j = 0; j < this.style_props.length; ++j) {
       var prop = this.style_props[j]
       if (style_elem+":"+prop in d) {
-        var value = d[style_elem+":"+prop].trim()
-        if (value !== '') {
-          rule[prop] = value
-          found = true
-        }
+        rule[prop] = d[style_elem+":"+prop]
+        found = true
         delete d[style_elem+":"+prop]
       }
     }

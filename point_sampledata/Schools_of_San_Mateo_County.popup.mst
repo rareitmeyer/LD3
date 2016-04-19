@@ -1,16 +1,18 @@
 <h4>{{properties.name}}</h4>
 
-<pre class="address">
-{{properties.address}}
-</pre>
 
 <table class="popup">
 <tr><th class="metric">Metric</th><th class="value">Value</th></tr>
 <tr><td class="metric">Type of School</td><td class="value">{{properties.type}}</td></tr>
 </table>
 
+<p>School location:</p>
+
+<pre class="address">
+{{properties.address}}
+</pre>
+
 <table class="popup">
-<tr><th class="metric">Metric</th><th class="value">Value</th></tr>
 <tr><td class="metric">Latitude</td><td class="value">{{float4 properties.dlat}}</td></tr>
 <tr><td class="metric">Longitude</td><td class="value">{{float4 properties.dlon}}</td></tr>
 </table>
