@@ -33,9 +33,9 @@ https://github.com/mapbox/maki.
 # Changing Icons (Point Layers Only)
 
 Point data shows discrete points on a map, like the location of a
-resturant or school. Point layers are shown with icons, specified
-as a URL in the "icon:value" column. Icons must be 16x16 pixels,
-preferably as PNG files.
+resturant or school. Basic point layers are shown with icons,
+specified as a URL in the "icon:value" column. Icons must be 16x16
+pixels, preferably as PNG files.
 
 Optionally, a icon:anchor column can be given to pick the location
 of the point relative to the icon. Use 'top-right' to position
@@ -49,6 +49,22 @@ the icon's bottom-left. Valid choices for the icon:anchor are
 
 If there is no icon:anchor column, or it is blank, the icon is
 anchored as if bottom-center was given.
+
+
+# Visualizing Categorical Point Data with Data-Driven Icons
+
+The tool allows a point layer with categorized data to use different
+icons for different points, if the "icon:value" column is omitted or
+blank, and a "icon:categoricalMapCsv" column is present and filled in.
+
+The icon:categoricalMapCsv column must identify a CSV file with one
+column named icon:value, holding a URL to an icon, and one or more
+other columns named to match properties in the geojson layer.  If a
+property-column is left blank, it is ignored. If all the filled-in
+property columns match, the feature will use the icon:value. The
+file is processed top-to-bottom.
+
+See the example in point_sampledata/Schools_of_San_Mateo_County.icon_map.csv.
 
 
 # Altering Visualization (Shape Layers Only)

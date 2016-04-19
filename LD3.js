@@ -47,7 +47,7 @@ function GeoApp(map_div, base_layers, initial_base) {
   this.layer_control.addTo(this.map);
 
   this.mustache_elements = ['popupMst', 'attributionMst']
-  this.csv_elements = ['icon:mapCsv']
+  this.csv_elements = ['icon:categoricalMapCsv']
   this.style_elements = ['color', 'fillColor', 'opacity', 'fillOpacity', 'weight']
   this.style_props = ['value', 'property', 'range:low', 'range:high', 'default']
 
@@ -317,19 +317,19 @@ GeoApp.prototype.iconUrlFactory = function(d, self)
     return('icons/Unknown.png')
   }
 
-  if ('icon:url' in d) {
+  if ('icon:value' in d) {
     fn = function(feature) {
-      return (d['icon:url'])
+      return (d['icon:value'])
     }
-  } else if ('icon:mapCsv' in d) {
+  } else if ('icon:categoricalMapCsv' in d) {
     fn = function(feature) {
-      var mapCsv = self.csv_files[d['icon:mapCsv']]
+      var categoricalMapCsv = self.csv_files[d['icon:categoricalMapCsv']]
       iconUrl = 'icons/Unknown.png'
-      for (row_idx in mapCsv) {
-        row = mapCsv[row_idx]
+      for (row_idx in categoricalMapCsv) {
+        row = categoricalMapCsv[row_idx]
         match = true
         for (colname in row) {
-          if (colname !== 'icon:url') {
+          if (colname !== 'icon:value') {
             if (colname in feature.properties) {
               if (feature.properties[colname] !== row[colname]) {
                 match = false
@@ -340,7 +340,7 @@ GeoApp.prototype.iconUrlFactory = function(d, self)
           }
         }
         if (match === true) {
-          iconUrl = row['icon:url']
+          iconUrl = row['icon:value']
           break
         }
       }  
@@ -621,7 +621,7 @@ GeoApp.prototype.addLegend = function(layer_name)
     var legend_value = tr.append("td").attr("class", "legend_value")
       .attr("class", "legend_value")
     if (this.extra_layers[layer_name]['geomType:value'] == 'point') {
-      legend_value.append("img").attr("src", this.extra_layers[layer_name]['icon:url'])
+      legend_value.append("img").attr("src", this.extra_layers[layer_name]['icon:value'])
     } else if (this.extra_layers[layer_name]['geomType:value'] == 'shape') {
       var svg = legend_value
         .append("svg")
