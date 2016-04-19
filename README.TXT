@@ -7,8 +7,9 @@ San Mateo Code for America Brigade.
 
 # Simple Use
 
-To use it, you will need to unpack the sample data in sampledata.tar.xz.
-(If you have Javascript disabled, you'll also need to un-disable it.)
+This should work out-of-the box with the data in point_sampledata
+and shape_sampledata. (Note that if you have Javascript disabled
+in your browser, you'll need to enable it.)
 
 And you'll need a (minimal) web server, running in this directory.
 Open a command line and change to the directory where LD3.html is.
