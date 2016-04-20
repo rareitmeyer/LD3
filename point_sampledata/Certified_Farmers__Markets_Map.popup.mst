@@ -1,0 +1,17 @@
+<h4>{{properties.name}}</h4>
+
+
+<table class="popup">
+<tr><th class="metric">Metric</th><th class="value">Value</th></tr>
+<tr><td class="metric">Open Months(1)</td><td class="value">{{properties.open_mnt1}}</td></tr>
+<tr><td class="metric">Open Days(1)</td><td class="value">{{properties.open_day1}}</td></tr>
+<tr><td class="metric">Open Hours(1)</td><td class="value">{{properties.open_hrs1}}</td></tr>
+<tr><td class="metric">Open Months(2)</td><td class="value">{{properties.open_mnt2}}</td></tr>
+<tr><td class="metric">Open Days(2)</td><td class="value">{{properties.open_day2}}</td></tr>
+<tr><td class="metric">Open Hours(2)</td><td class="value">{{properties.open_hrs2}}</td></tr>
+</table>
+
+<table class="popup">
+<tr><td class="metric">Latitude</td><td class="value">{{float4 properties.dlat}}</td></tr>
+<tr><td class="metric">Longitude</td><td class="value">{{float4 properties.dlon}}</td></tr>
+</table>
