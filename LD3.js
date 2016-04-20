@@ -313,21 +313,18 @@ GeoApp.prototype.locationFromIconAnchor = function (size, iconAnchor)
 
 GeoApp.prototype.iconUrlFactory = function(d, self)
 {
-  var fn = function(feature) {
-    return('icons/Unknown.png')
-  }
-
   if ('icon:value' in d) {
-    fn = function(feature) {
+    return(function(feature) {
       return (d['icon:value'])
     }
+    )
   } else if ('icon:categoricalMapCsv' in d) {
-    fn = function(feature) {
+    return (function(feature) {
       var categoricalMapCsv = self.csv_files[d['icon:categoricalMapCsv']]
-      iconUrl = 'icons/Unknown.png'
+      var iconUrl = 'icons/Unknown.png'
       for (row_idx in categoricalMapCsv) {
-        row = categoricalMapCsv[row_idx]
-        match = true
+        var row = categoricalMapCsv[row_idx]
+        var match = true
         for (colname in row) {
           if (colname !== 'icon:value') {
             if (colname in feature.properties) {
@@ -346,8 +343,13 @@ GeoApp.prototype.iconUrlFactory = function(d, self)
       }  
       return (iconUrl)
     }
+    )
   }
-  return (fn)
+  return (function(feature) {
+    return('icons/Unknown.png')
+  })
+
+
 }
 
 // Process a row of layer data, d.
@@ -368,7 +370,9 @@ GeoApp.prototype.processLayerRecord = function(d)
     console.log('location is'+location.toString())
     
     iconFn = this.iconUrlFactory(d, this)
-    options['pointToLayer'] = function(feat,ll) {
+    options['name'] = d.name
+    function pointToLayerFactory(iconFn, size, location) {
+      return (function(feat,ll) {
         return L.marker(ll, {
             icon: L.icon({
               iconUrl: iconFn(feat),
@@ -376,7 +380,9 @@ GeoApp.prototype.processLayerRecord = function(d)
               iconAnchor: location
             })
         })
-      }
+      })
+    }
+    options['pointToLayer'] = pointToLayerFactory(iconFn, size, location)
   }
 
   // handle 'properties' column
@@ -512,9 +518,14 @@ GeoApp.prototype.getStyle = function(layer_name, style_elem, feature)
 // Return the unique legend dimension(s) of the layer, a list
 // of properties. If the layer lacks any properties
 // for a legend, returns an empty list
-GeoApp.prototype.legendDimensions = function(layer_name, preferred_levels)
+GeoApp.prototype.layerShapeDimensions = function(layer_name, preferred_levels)
 {
   retval = {}
+
+  // if this is a point layer, skip it.
+  if (this.extra_layers[layer_name]['geomType:value'] === 'point') {
+    return (retval)
+  }
 
   if (typeof(preferred_levels) == 'undefined' || preferred_levels < 2) {
     preferred_levels = 5
@@ -597,6 +608,83 @@ GeoApp.prototype.makeLegendPropSelectCb = function(layer_name, old_prop, propert
   return legend_prop_select_cb
 }
 
+
+GeoApp.prototype.addLegendShapeIndicator = function(svg, box_size, layer_name)
+{
+  // now draw two rectangles side-by-side so we get a boundary between them
+  for (i = 0; i < 2; ++i) {
+    svg.append("rect")
+      .attr("width", box_size).attr("height", box_size)
+      .attr("x", i*box_size).attr("y", 0)
+      .attr("stroke", (function(d){return this.getStyle(layer_name, "color", d)}).bind(this))
+      .attr("stroke-width", (function(d){return this.getStyle(layer_name, "weight", d)}).bind(this))
+      .attr("opacity", (function(d){return this.getStyle(layer_name, "fillOpacity", d)}).bind(this))
+      .attr("fill", (function(d){return this.getStyle(layer_name, "fillColor", d)}).bind(this))
+  }
+}
+
+
+GeoApp.prototype.layerPointDimensions = function(layer_name)
+{
+  retval = {}
+  
+  // if this is a shape layer, skip it    
+  if (this.extra_layers[layer_name]['geomType:value'] === 'shape') {
+    return (retval)
+  }
+
+  if ('icon:categoricalMapCsv' in this.extra_layers[layer_name]) {
+    // make a shorter alias...
+    var csvMap = this.csv_files[this.extra_layers[layer_name]['icon:categoricalMapCsv']]
+    for (var i in csvMap) {
+      var row = csvMap[i]
+      for (var colname in row) {
+        if (colname != 'icon:value' && !(colname in retval)) {
+          retval[colname] = true
+        }
+      }
+    }
+  }
+
+  return (retval)
+}
+
+
+// Add (append) a layer to the legend. We won't be picky about
+// ordering; if someone opens and closes layers randomly, we won't be
+// finnicky about which layer is "first" in the legend.
+//
+// A layer in the legend_div is its own div, class="layer_id", with a <p
+// class="legend_layer_name"> naming the layer.
+//
+// If the layer has no dimensions (EG, just one icon for a point
+// layer, or just one fillColor/fillOpacity/color/weight for a shape
+// layer), the indicator for the layer will be run into the end of the
+// paragraph.
+//
+// If the layer does have some dimensions (multiple icons, or
+// multiple fillColor/fillOpacity/etc) driven by data, we'll need
+// to make a key with the indicators. A key should be a single 
+// property, but in icon layers it's possible to imagine picking
+// icons based on more than one property.
+//
+// Lastly, shape properties can allow picking a different property
+// to visualize the data in the same way.
+//
+// So point layers with dimensions will have a table, with
+// class="legend_table", straight from the CSV file: header of the
+// non-icon value columns, then the icon.  Each row will be the same
+// as the CSV, except perhaps for column- ordering to put the icon
+// last. (The order of the other columns is undefined.) The th will be
+// class="legend_dimension", and the tds will be "legend_value" and
+// "legend_indicator".
+//
+// Shape layers with dimensions will have a <select
+// class="legend_dimension"> with the options, if allowed. If not, a p
+// with class="legend_dimension">.  Then a table
+// class="legend_table". tds will be "legend_value" and
+// "legend_indicator".
+
 GeoApp.prototype.addLegend = function(layer_name)
 {
   var box_size = 12
@@ -610,38 +698,32 @@ GeoApp.prototype.addLegend = function(layer_name)
   }
   // Add header and remove any prior legend
   legend_div.node().innerHTML = ''
-  legend_props = this.legendDimensions(layer_name, 5)
 
-  if (Object.keys(legend_props).length == 0) {
-    // degerate case: there's no properties for displaying numeric data.
-    var tr = legend_div
-      .append("table").attr("class", "legend_layer")
-        .append("tr")
-    tr.append("td").attr("class", "legend_name").text(layer_name)
-    var legend_value = tr.append("td").attr("class", "legend_value")
-      .attr("class", "legend_value")
+  var legend_name_p = legend_div.append("p")
+    .attr("class", "legend_layer_name")
+  legend_name_p.text(layer_name)
+
+  var layer_has_dimensions = true
+  point_dims = this.layerPointDimensions(layer_name)
+  shape_dims = this.layerShapeDimensions(layer_name, 5)
+  if (Object.keys(point_dims).length == 0 && Object.keys(shape_dims).length == 0) {
+    layer_has_dimensions = false
+  }
+
+  if (!layer_has_dimensions) {
+    legend_name_p.append("span").attr("class", "legend_indicator_spacer")
     if (this.extra_layers[layer_name]['geomType:value'] == 'point') {
-      legend_value.append("img").attr("src", this.extra_layers[layer_name]['icon:value'])
-    } else if (this.extra_layers[layer_name]['geomType:value'] == 'shape') {
-      var svg = legend_value
-        .append("svg")
+      legend_name_p.append("img").attr("src", this.extra_layers[layer_name]['icon:value'])
+    } else {
+      var svg = legend_name_p.append("span").append("svg")
         .attr("width", 2*box_size).attr("height", box_size)
-      // now draw two rectangles side-by-side so we get a boundary between them
-      for (i = 0; i < 2; ++i) {
-        svg.append("rect")
-          .attr("width", box_size).attr("height", box_size)
-          .attr("x", i*box_size).attr("y", 0)
-          .attr("stroke", this.getStyle(layer_name, "color", {'properties':{}}))
-          .attr("stroke-width", this.getStyle(layer_name, "weight", {'properties':{}}))
-          .attr("opacity", this.getStyle(layer_name, "fillOpacity", {'properties':{}}))
-          .attr("fill", this.getStyle(layer_name, "fillColor", {'properties':{}}))
-      }
+      this.addLegendShapeIndicator(svg, box_size, layer_name)
     }
-  } else {
-    legend_div.append("p").attr("class", "legend_layer").text(layer_name)
-    for (prop in legend_props) {
+  }
+  if (Object.keys(shape_dims).length !== 0) {
+    for (prop in shape_dims) {
       if ('properties' in this.extra_layers[layer_name]) {
-        var select = legend_div.append("select").attr("class", "legend_prop_select")
+        var select = legend_div.append("select").attr("class", "legend_dimension")
         properties = this.extra_layers[layer_name].properties
         for (i in properties) {
           var opt = select.append("option").attr("value", properties[i]).text(properties[i])
@@ -651,32 +733,43 @@ GeoApp.prototype.addLegend = function(layer_name)
         }
         select.on('change', this.makeLegendPropSelectCb(layer_name, prop, properties))
       } else {
-        var p = legend_div.append("p").attr("class", "legend_prop").text(prop)
+        var p = legend_div.append("p").attr("class", "legend_dimension").text(prop)
       }
-      var tr = legend_div.append("table").attr("class", "legend_layer")
+      var tr = legend_div.append("table").attr("class", "legend_table")
                  .selectAll("tr")
-      tr.data(legend_props[prop].values)
+      tr.data(shape_dims[prop].values)
         .enter()
         .call((function(s) {
           var r = s.append("tr")
           r.append("td")
-            .attr("class", "legend_name")
+            .attr("class", "legend_value")
             .text(function(d){if ('formatted_properties' in d) {return(d.formatted_properties[prop]) } else { return(d.properties[prop])}})
           var svg = r.append("td")
-            .attr("class", "legend_value")
+            .attr("class", "legend_indicator")
             .append("svg")
           svg.attr("width", 2*box_size).attr("height", box_size)
-          // now draw two rectangles side-by-side so we get a boundary between them
-          for (i = 0; i < 2; ++i) {
-            svg.append("rect")
-              .attr("width", box_size).attr("height", box_size)
-              .attr("x", i*box_size).attr("y", 0)
-              .attr("stroke", (function(d){return(this.getStyle(layer_name, "color", d))}).bind(this))
-              .attr("stroke-width", (function(d){return(this.getStyle(layer_name, "weight", d))}).bind(this))
-              .attr("opacity", (function(d){return(this.getStyle(layer_name, "fillOpacity", d))}).bind(this))
-              .attr("fill", (function(d){return(this.getStyle(layer_name, "fillColor", d))}).bind(this))
-          }
+          this.addLegendShapeIndicator(svg, box_size, layer_name)
 	}).bind(this))
+    }
+  }
+  if (Object.keys(point_dims).length !== 0) {
+    csvMap = this.csv_files[this.extra_layers[layer_name]['icon:categoricalMapCsv']]
+    var table = legend_div.append("table").attr("class", "legend_table")
+    th_row = table.append("tr")
+    cols = Object.keys(point_dims)
+    for (c in cols) {
+      colname = cols[c]
+      th_row.append("th").attr("class", "legend_dimension").text(colname)
+    }
+    th_row.append("th").attr("class", "legend_dimension").text("icon")
+    for (r in csvMap) {
+      row = csvMap[r]
+      var tr = table.append("tr")
+      for (c in cols) {
+        colname = cols[c]
+        var td = tr.append("td").attr("class", "legend_value").text(row[colname])
+      }
+      tr.append("td").attr("class", "legend_indicator").append("img").attr("src", row['icon:value'])
     }
   }
 }

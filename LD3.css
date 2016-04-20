@@ -34,30 +34,36 @@ table .value {
   border-spacing: 0;
 }
 
-#legend_div td.legend_value {
+#legend_div td.legend_indicator {
   padding-left: 10px;
 }
 
-#legend_div p.legend_prop {
+#legend_div p.legend_layer_name {
   margin-top: 0px;
   margin-bottom: 0px;
+  margin-left: 0px;
+  font-weight: bold;
+  border: 0px;
+  padding: 0px;
+}
+
+#legend_div p.legend_value {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  margin-right: 0px;
   margin-left: 10px;
   border: 0px;
   padding: 0px;
 }
 
-#legend_div p.legend_layer {
-  margin: 0px;
-  border: 0px;
-  padding: 0px;
-}
-
-.legend_name {
+tr.legend_dimension {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  margin-left: 10px;
   text-align: right;
-  font-weight: bold;
 }
 
-.legend_value {
+.legend_indicator {
   font-size: 1px;
 }
 
