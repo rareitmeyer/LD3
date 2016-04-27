@@ -1,3 +1,6 @@
+body {
+  font-family: Sans;
+}
 
 #map_div {
   width: 600px;
@@ -7,6 +10,10 @@
 
 table .value {
   text-align: right;
+}
+
+div#credits {
+  font-size: 8;
 }
 
 #legend_div {
@@ -32,6 +39,11 @@ table .value {
   padding: 0px 0px 0px 0px;
   margin-left: 20px;
   border-spacing: 0;
+}
+
+p.page_title {
+  font-weight: bold;
+  font-size: 14pt;
 }
 
 #legend_div td.legend_indicator {
