@@ -76,6 +76,7 @@ div.label_div {
   border: 0px;
   padding: 0px;
   text-align: center;
+  pointer-events: none;
 }
 
 div.label_div p {
